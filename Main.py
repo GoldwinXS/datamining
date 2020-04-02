@@ -1,4 +1,5 @@
-import requests, bs4
+import requests
+import bs4
 import spacy
 from spacy.matcher import Matcher
 from spacy.tokens import Span
@@ -7,25 +8,30 @@ import networkx as nx
 import plotly.graph_objs as go
 import matplotlib.pyplot as plt
 
-# get website text
+
 target_url = 'https://en.wikipedia.org/wiki/Distributed_computing'
 
+# get website html
 req = requests.get(target_url)
 
+# parse text with bs4
 soup = bs4.BeautifulSoup(req.text, 'html.parser')
 
+# find all of the p tags
 tags = soup.find_all('p')
 
+# join all of the text from those tags into one long string
 text = ' '.join([tag.text.replace('\n', '') for tag in tags])
 
+# separate the string at every period
 texts = text.split('.')
 
-# load and parse with SpaCy
+# load SpaCy model. Used in many functions below. 
 nlp = spacy.load('en_core_web_sm')
 
 
 def get_entities(sent):
-    """get entities function, an example."""
+    """get entities function, an example taken from the internet with the explanation"""
 
     """I have defined a few empty variables in this chunk. prv_tok_dep and prv_tok_text will hold the dependency
     tag of the previous word in the sentence and that previous word itself, respectively. prefix and modifier will
@@ -140,11 +146,15 @@ kg = get_all_text_relations(texts)
 
 def plot_kg(kg_df):
     """ Plot a knowledge graph from a pandas dataframe, using the from_pandas_edgelist function in networkx"""
+
+    # create the graph
     G = nx.from_pandas_edgelist(kg_df, "source", "target", edge_attr=True, create_using=nx.MultiDiGraph())
     plt.figure(figsize=(12, 12))
-    # get pos of all nodes
+
+    # arrange pos of all nodes
     pos = nx.spring_layout(G, k=0.5)  # k regulates the distance between nodes
 
+    # find how many adjacencies each node has in a dict
     adjs = {node: len(num) for node, num in G.adjacency()}
     max_adj = max(adjs.values())
 
@@ -167,22 +177,21 @@ def plot_kg(kg_df):
         marker=dict(
             size=node_z,
             color=node_z,  # set color to an array/list of desired values
-            colorscale='Viridis',  # choose a colorscale
+            colorscale='Viridis',
             opacity=0.8)
     )
 
     node_adjacencies = []
     node_text = []
-    for node, adjacencies in enumerate(G.adjacency()):
+    for i, adjacencies in enumerate(G.adjacency()):
         node_adjacencies.append(len(adjacencies[1]))
-        node_text.append(f'{names[node]} connections: ' + str(len(adjacencies[1])))
+        node_text.append(f'{names[i]} connections: ' + str(len(adjacencies[1])))
 
     # prepare edges
     edges = []
 
     edge_x = []
     edge_y = []
-    edge_z = []
     for s, t in G.edges():
         # add two edges
         x0, y0 = pos[s]
@@ -210,7 +219,7 @@ def plot_kg(kg_df):
     node_trace.marker.color = node_adjacencies
     node_trace.text = node_text
 
-    # make final plot
+    # define final plot
     fig = go.Figure(data=[node_trace] + edges,
                     layout=go.Layout(
                         title='<br>Network graph made with Python',
