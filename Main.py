@@ -26,7 +26,7 @@ text = ' '.join([tag.text.replace('\n', '') for tag in tags])
 # separate the string at every period
 texts = text.split('.')
 
-# load SpaCy model. Used in many functions below. 
+# load SpaCy model. Used in many functions below.
 nlp = spacy.load('en_core_web_sm')
 
 
